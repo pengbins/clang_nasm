@@ -46,7 +46,7 @@ apt-get remove  -qqy wget python3-pip
 rm -rf /var/lib/apt/lists/*
 EOF
 
-ENV CC /usr/bin/clang-11
-ENV CXX /usr/bin/clang++-11
+ENV CC /usr/bin/clang-$CL_VER
+ENV CXX /usr/bin/clang++-$CL_VER
 RUN echo using clang-$CL_VER + nasm
 
