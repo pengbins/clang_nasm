@@ -1,52 +1,50 @@
 # syntax=docker/dockerfile:1.3-labs
-FROM ubuntu:20.04
+FROM ubuntu:16.04 AS glibc-builder
 
-ARG CLANG_VER=10
-ENV CL_VER=$CLANG_VER
+ENV DEBIAN_FRONTEND=noninteractive 
+ENV PREFIX_DIR=/usr/glibc-compat
 
-RUN <<EOF
-set -e
-set -x
-apt-get update -qq 
-DEBIAN_FRONTEND=noninteractive apt-get install -qqy --no-install-recommends \
-        gnupg2 \
-        software-properties-common \
-        wget
+ARG GLIBC_VER=2.17
+ENV GLIBC_VERSION=$GLIBC_VER
+ENV GLIBC_URL=https://ftpmirror.gnu.org/libc
 
-wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
+RUN apt-get -q update \
+	&& apt-get -qy install \
+		bison \
+		build-essential \
+		gawk \
+		gettext \
+		openssl \
+		python3 \
+		texinfo \
+		wget
 
-add-apt-repository "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-${CL_VER} main"
-#add-apt-repository "deb-src http://apt.llvm.org/focal/ llvm-toolchain-focal-${CL_VER} main"
+RUN mkdir -p /glibc-build
 
-apt-get update -qq
-
-DEBIAN_FRONTEND=noninteractive apt-get install -qqy --no-install-recommends \
-        libc++-${CL_VER}-dev \
-        clang-$CL_VER \
-        clang-tidy-$CL_VER \
-        clang-format-$CL_VER \
-        llvm-$CL_VER \
-        nasm \
-        git \
-        cmake \
-        make \
-        tar \
-        pkg-config \
-        ccache \
-        python3 \
-        python3-pip
-
-python3 -m pip install gcovr
-
-ln -s /usr/bin/clang-tidy-$CL_VER /usr/bin/clang-tidy
-ln -s /usr/bin/clang-format-$CL_VER /usr/bin/clang-format
-ln -s /usr/lib/llvm-$CL_VER/lib/libc++abi.so.1.0 /usr/local/lib/libc++abi.so
-
-apt-get remove  -qqy wget python3-pip
-rm -rf /var/lib/apt/lists/*
+RUN <<EOF cat >> /glibc-build/configparams
+slibdir=${PREFIX_DIR}/lib
+rtlddir=${PREFIX_DIR}/lib
+sbindir=${PREFIX_DIR}/bin
+rootsbindir=${PREFIX_DIR}/bin
+build-programs=yes
 EOF
 
-ENV CC /usr/bin/clang-$CL_VER
-ENV CXX /usr/bin/clang++-$CL_VER
-RUN echo using clang-$CL_VER + nasm
+
+RUN mkdir -p /glibc-build && cd /glibc-build  && \
+    wget -qO- "${GLIBC_URL}/glibc-${GLIBC_VERSION}.tar.gz" | tar zxf - && \
+    sed  -r -i "s/3\.79/4\./" "/glibc-build/glibc-$GLIBC_VERSION/configure" && \
+    "/glibc-build/glibc-$GLIBC_VERSION/configure" \
+    --prefix="${PREFIX_DIR}" \
+    --libdir="${PREFIX_DIR}/lib" \
+    --libexecdir="${PREFIX_DIR}/lib" \
+    --enable-multi-arch  && \ 
+     make -j $(nproc) && make install
+
+ARG CLANG_VER=16
+FROM ghcr.io/pengbins/clang_nasm:16-master  AS dist
+
+ENV GLIBC_DIR=/usr/glibc-compat
+ENV GLIBC_VERSION=$GLIBC_VER
+
+COPY --from=glibc-builder $GLIBC_DIR/ $GLIBC_DIR/
 

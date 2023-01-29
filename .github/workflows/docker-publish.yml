@@ -7,7 +7,7 @@ name: Docker
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master", "glibc" ]
     # Publish semver tags as releases.
     tags: [ 'v*.*.*' ]
   pull_request:
@@ -33,7 +33,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        CLANG_VER: [10,12,14,16]
+        CLANG_VER: [16]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -73,7 +73,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=ref,event=branch
-            type=sha
+            type=sha,prefix=${{ matrix.CLANG_VER }}-g,onlatest=true
           flavor: |
             prefix=${{ matrix.CLANG_VER }}-,onlatest=true
 
