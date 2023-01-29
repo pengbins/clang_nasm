@@ -33,7 +33,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        CLANG_VER: [10,12,14,15]
+        CLANG_VER: [10,12,14,16]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -71,6 +71,9 @@ jobs:
         uses: docker/metadata-action@v4.1.1
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=sha
           flavor: |
             prefix=${{ matrix.CLANG_VER }}-,onlatest=true
 
