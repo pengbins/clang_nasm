@@ -33,6 +33,8 @@ DEBIAN_FRONTEND=noninteractive apt-get install -qqy --no-install-recommends \
         tar \
         pkg-config \
         ccache \
+        curl \
+        unzip \
         python3 \
         python3-pip
 
