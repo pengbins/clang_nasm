@@ -40,6 +40,8 @@ DEBIAN_FRONTEND=noninteractive apt-get install -qqy --no-install-recommends \
 
 python3 -m pip install gcovr
 
+ln -s /usr/bin/clang-$CL_VER /usr/bin/clang
+ln -s /usr/bin/clang++-$CL_VER /usr/bin/clang++
 ln -s /usr/bin/clang-tidy-$CL_VER /usr/bin/clang-tidy
 ln -s /usr/bin/clang-format-$CL_VER /usr/bin/clang-format
 ln -s /usr/lib/llvm-$CL_VER/lib/libc++abi.so.1.0 /usr/local/lib/libc++abi.so
