@@ -33,7 +33,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        CLANG_VER: [10,12,14,16]
+        CLANG_VER: [12,14,16,18]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
